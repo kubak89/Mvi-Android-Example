@@ -7,12 +7,12 @@
     android:inAnimation="@android:anim/fade_in"
     android:orientation="vertical"
     android:outAnimation="@android:anim/fade_out"
-    android:paddingBottom="@dimen/margin_quadruple"
     android:paddingLeft="@dimen/margin_double"
+    android:paddingTop="@dimen/margin_quadruple"
     android:paddingRight="@dimen/margin_double"
-    android:paddingTop="@dimen/margin_quadruple">
+    android:paddingBottom="@dimen/margin_quadruple">
 
-    <android.support.constraint.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -47,7 +47,7 @@
             android:layout_height="wrap_content"
             android:text="@string/login.register"
             app:layout_constraintBottom_toBottomOf="parent" />
-    </android.support.constraint.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ProgressBar
         android:layout_width="match_parent"

@@ -1,57 +1,38 @@
 package com.example.appName.presentation.random
 
+import com.example.appName.presentation.base.BasePresenter
 import io.reactivex.Observable
-import io.reactivex.disposables.Disposable
-import io.reactivex.subjects.BehaviorSubject
 import java.util.*
-import javax.inject.Inject
 
-class RandomPresenter @Inject constructor(private val view: RandomView,
-                                          private val random: Random,
-                                          initialState: RandomViewState) {
-    private val stateSubject: BehaviorSubject<RandomViewState> = BehaviorSubject.create()
-    private lateinit var viewIntentsDisposable: Disposable
+class RandomPresenter(
+        private val view: RandomView,
+        private val random: Random,
+        initialState: RandomViewState
+) : BasePresenter<RandomViewState, RandomViewState.PartialState>(initialState) {
 
-    init {
-        subscribeToViewIntents(initialState, createRollFirstObservable(),
-                createRollSecondObservable())
+    override fun reduceViewState(previousState: RandomViewState, partialState: RandomViewState.PartialState): RandomViewState {
+        return when (partialState) {
+            is RandomViewState.PartialState.FirstRolled ->
+                RandomViewState(previousState, firstRoll = partialState.generatedNumber)
+            is RandomViewState.PartialState.SecondRolled ->
+                RandomViewState(previousState, secondRoll = partialState.generatedNumber)
+        }
     }
 
-    private fun createRollFirstObservable(): Observable<RandomPartialState> {
+    override fun provideViewIntents(): List<Observable<RandomViewState.PartialState>> =
+            listOf(createRollFirstObservable(), createRollSecondObservable())
+
+    private fun createRollFirstObservable(): Observable<RandomViewState.PartialState> {
         return view.rollFirstIntent
                 .map { generateRandomNumber() }
-                .map { RandomPartialState.FirstRolled(it) }
+                .map { RandomViewState.PartialState.FirstRolled(it) }
     }
 
-    private fun createRollSecondObservable(): Observable<RandomPartialState> {
+    private fun createRollSecondObservable(): Observable<RandomViewState.PartialState> {
         return view.rollSecondIntent
                 .map { generateRandomNumber() }
-                .map { RandomPartialState.SecondRolled(it) }
+                .map { RandomViewState.PartialState.SecondRolled(it) }
     }
 
     private fun generateRandomNumber() = (random.nextInt().and(Integer.MAX_VALUE)) % 6 + 1
-
-    private fun subscribeToViewIntents(initialState: RandomViewState,
-                                       vararg observables: Observable<RandomPartialState>) {
-        viewIntentsDisposable = Observable
-                .merge(observables.asList())
-                .scan(initialState, this::reduceViewState)
-                .subscribe(stateSubject::onNext)
-    }
-
-    private fun reduceViewState(previousState: RandomViewState, partialState: RandomPartialState) =
-            when (partialState) {
-                is RandomPartialState.FirstRolled ->
-                    RandomViewState(previousState, firstRoll = partialState.generatedNumber)
-                is RandomPartialState.SecondRolled ->
-                    RandomViewState(previousState, secondRoll = partialState.generatedNumber)
-            }
-
-    //region Lifecycle methods
-    fun getStateObservable() = stateSubject as Observable<RandomViewState>
-
-    fun getCurrentViewState(): RandomViewState? = stateSubject.value
-
-    fun dispose() = viewIntentsDisposable.dispose()
-    //endregion
 }

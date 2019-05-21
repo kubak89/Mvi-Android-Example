@@ -1,67 +1,39 @@
 package com.example.appName.presentation.login
 
-import android.os.Bundle
-import android.widget.EditText
 import com.example.appName.R
-import com.example.appName.data.di.DataModule
+import com.example.appName.common.extension.createTextChangesObservable
+import com.example.appName.common.extension.getMessage
+import com.example.appName.common.inputValidation.PasswordValidator
+import com.example.appName.common.inputValidation.UsernameValidator
+import com.example.appName.data.model.request.LoginRequest
 import com.example.appName.presentation.base.BaseActivity
-import com.example.appName.presentation.login.di.DaggerLoginComponent
-import com.example.appName.presentation.login.di.LoginModule
-import com.example.appName.presentation.login.validation.PasswordValidator
-import com.example.appName.presentation.login.validation.UsernameValidator
-import com.example.appName.presentation.login.validation.getMessage
-import com.example.appName.presentation.utils.createTextChangesObservable
-import com.example.appName.presentation.utils.getMessage
 import com.jakewharton.rxbinding2.view.RxView
-import com.jakewharton.rxbinding2.widget.RxTextView
 import io.reactivex.Observable
 import kotlinx.android.synthetic.main.activity_login.*
 import org.jetbrains.anko.alert
-import java.util.concurrent.TimeUnit
 
-private const val MAIN_VIEW_INDEX = 0
-private const val LOADING_VIEW_INDEX = 1
-
-const val KEY_SAVED_ACTIVITY_VIEW_STATE = "viewState"
-
-class LoginActivity : BaseActivity<LoginViewState, LoginPresenter>(), LoginView {
+class LoginActivity : BaseActivity<LoginViewState, LoginPresenter>(
+        R.layout.activity_login
+), LoginView {
     //region Intents
-    override val changeUsernameIntent: Observable<String>
-        get() = loginUsername.createTextChangesObservable()
-
-    override val changePasswordIntent: Observable<String>
-        get() = loginPassword.createTextChangesObservable()
-
-    override val loginIntent: Observable<LoginData>
-        get() = RxView.clicks(loginButton).map {
-            val username = loginUsername.text.toString()
-            val password = loginPassword.text.toString()
-            LoginData(username, password)
-        }
-
-    override val registerIntent: Observable<Any>
-        get() = RxView.clicks(loginRegisterButton)
-    //endregion
-
-    //region Activity methods
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setContentView(R.layout.activity_login)
-
-        DaggerLoginComponent.builder()
-                .loginModule(LoginModule(this, savedInstanceState))
-                .activityModule(activityModule)
-                .dataModule(DataModule())
-                .build().inject(this)
-
-        subscribeToViewState()
+    override val changeUsernameIntent: Observable<String> by lazy {
+        loginUsername.createTextChangesObservable()
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
+    override val changePasswordIntent: Observable<String> by lazy {
+        loginPassword.createTextChangesObservable()
+    }
 
-        outState.putSerializable(KEY_SAVED_ACTIVITY_VIEW_STATE, presenter.getCurrentViewState())
+    override val loginIntent: Observable<LoginRequest> by lazy {
+        RxView.clicks(loginButton).map {
+            val username = loginUsername.text.toString()
+            val password = loginPassword.text.toString()
+            LoginRequest(username, password)
+        }
+    }
+
+    override val registerIntent: Observable<Any> by lazy {
+        RxView.clicks(loginRegisterButton)
     }
     //endregion
 
@@ -107,4 +79,9 @@ class LoginActivity : BaseActivity<LoginViewState, LoginPresenter>(), LoginView 
             (viewState.usernameValidationResult == UsernameValidator.ValidationResult.VALID &&
                     viewState.passwordValidationResult == PasswordValidator.ValidationResult.VALID)
     //endregion
+
+    companion object {
+        private const val MAIN_VIEW_INDEX = 0
+        private const val LOADING_VIEW_INDEX = 1
+    }
 }

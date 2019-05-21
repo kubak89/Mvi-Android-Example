@@ -9,6 +9,8 @@ buildscript {
         jcenter()
     }
     dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.0-beta01'
+        classpath 'com.google.gms:google-services:4.2.0'
         classpathDependencies.each {
             add("classpath", it)
         }
